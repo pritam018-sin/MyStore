@@ -4,7 +4,7 @@ import { cloudinaryUpload } from "../utils/cloudnaryServices.js";
 
 const addProduct = asyncHandler(async (req, res) => {
   try {
-    const { name, description, price, category, quantity, brand } = req.fields;
+    const { name, description, price, category, quantity, brand } = req.body;
 
     // Validation
     switch (true) {
@@ -22,8 +22,8 @@ const addProduct = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: "Quantity is required" });
     }
 
-    const imageLocalPath = req.files?.image?.path;
-    
+    const imageLocalPath = req.file?.path;
+
     if (!imageLocalPath) {
       return res.status(400).json({ error: "Image file is required" });
     }
@@ -35,9 +35,14 @@ const addProduct = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: "Image upload failed" });
     }
 
-    const product = new Product({
-      ...req.fields,
-      image: image.secure_url,
+    const product = await Product.create({
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      brand,
+      image: image.url || "",
     });
 
     await product.save();
@@ -57,42 +62,53 @@ const addProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
-    const { name, description, price, category, quantity, brand } = req.fields;
+    const { id } = req.params;
+    const { name, description, price, category, quantity, brand } = req.body;
+    // ✅ Upload new image if provided
+    const imageLocalPath = req.file?.path;
 
-    // Validation
-    switch (true) {
-      case !name:
-        return res.json({ error: "Name is required" });
-      case !brand:
-        return res.json({ error: "Brand is required" });
-      case !description:
-        return res.json({ error: "Description is required" });
-      case !price:
-        return res.json({ error: "Price is required" });
-      case !category:
-        return res.json({ error: "Category is required" });
-      case !quantity:
-        return res.json({ error: "Quantity is required" });
+    if (!imageLocalPath) {
+      return res.status(400).json({ error: "Image file is required" });
     }
+    const image = await cloudinaryUpload(imageLocalPath);
 
+    if (!image) {
+      return res.status(400).json({ error: "Image upload failed" });
+    }
+    // ✅ Update only provided fields
     const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { ...req.fields },
+      id,
+      {
+        $set: {
+          name,
+          description,
+          price,
+          category,
+          quantity,
+          brand,
+          image: image.url,
+        },
+      },
       { new: true }
-    );
-
+    )
     await product.save();
 
-    res.json(product);
+    res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      product,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(400).json(error.message);
+    console.error("Error updating product:", error);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while updating product",
+      error: error.message,
+    });
   }
 });
-
 const removeProduct = asyncHandler(async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
