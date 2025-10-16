@@ -12,9 +12,4 @@ export default defineConfig({
       },
     },
   },
-  build: {
-    rollupOptions: {
-      external: ["vanilla-tilt"],
-    },
-  },
 });
