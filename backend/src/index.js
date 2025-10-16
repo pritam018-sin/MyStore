@@ -36,8 +36,11 @@ app.use(cookieParser());
 
 // CORS Configuration
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
+  origin: [
+    "http://localhost:5173",  // local
+    "https://mystore-3-49ap.onrender.com" // deployed frontend domain
+  ],
+  credentials: true, // if you are using cookies / auth tokens
 }));
 
 // API Routes
