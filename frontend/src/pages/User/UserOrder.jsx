@@ -7,7 +7,7 @@ const UserOrder = () => {
   const { data: orders, isLoading, error } = useGetMyOrdersQuery();
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 md:pl-20">
       <h2 className="text-3xl font-bold text-white mb-8 tracking-wide text-center">
         My Orders
       </h2>
@@ -15,7 +15,21 @@ const UserOrder = () => {
       {isLoading ? (
         <Loader />
       ) : error ? (
-        <Message variant="danger">{error?.data?.error || error.error}</Message>
+        <Message variant="danger">
+          {error?.data?.message || error?.error || "Error loading orders"}
+        </Message>
+      ) : !orders || orders.length === 0 ? (
+        <div className="text-center py-12">
+          <Message>You have not placed any orders yet.</Message>
+          <div className="mt-6">
+            <Link
+              to="/shop"
+              className="inline-block px-6 py-3 font-semibold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl shadow-lg hover:shadow-fuchsia-500/30 transition-all hover:scale-105"
+            >
+              Start Shopping
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
           <table className="min-w-full text-sm text-white">
@@ -37,23 +51,33 @@ const UserOrder = () => {
                   className="transition-all duration-300 hover:bg-white/5 border-b border-white/5"
                 >
                   <td className="px-6 py-4">
-                    <img
-                      src={order.orderItems[0].image}
-                      alt={order.user}
-                      className="w-20 h-20 object-cover rounded-lg shadow-md"
-                    />
+                    {order.orderItems && order.orderItems[0] ? (
+                      <img
+                        src={order.orderItems[0].image}
+                        alt={order._id}
+                        className="w-20 h-20 object-cover rounded-lg shadow-md"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 bg-white/10 rounded-lg flex items-center justify-center text-xs text-gray-400">
+                        No Image
+                      </div>
+                    )}
                   </td>
 
                   <td className="px-6 py-4">{order._id.slice(0, 10)}...</td>
-                  <td className="px-6 py-4">{order.createdAt.substring(0, 10)}</td>
-                  <td className="px-6 py-4">₹ {order.totalPrice}</td>
+                  <td className="px-6 py-4">
+                    {order.createdAt ? order.createdAt.substring(0, 10) : "N/A"}
+                  </td>
+                  <td className="px-6 py-4">
+                    ₹ {Number(order.totalPrice).toFixed(2)}
+                  </td>
 
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         order.isPaid
                           ? "bg-green-500/20 text-green-300 border border-green-400/30"
-                          : "bg-red-500/20 text-gray-300 border  border-red-400/30"
+                          : "bg-red-500/20 text-red-300 border border-red-400/30"
                       }`}
                     >
                       {order.isPaid ? "Completed" : "Pending"}

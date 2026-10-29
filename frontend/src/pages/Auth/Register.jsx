@@ -41,17 +41,17 @@ const Register = () => {
         navigate(redirect);
         toast.success("User successfully registered");
       } catch (err) {
-        console.log(err);
-        toast.error(err.data.message);
+        console.error(err);
+        toast.error(err?.data?.message || err?.error || "Registration failed");
       }
     }
   };
 
   return (
-    <section className="flex items-center justify-center min-h-screen bg-cover bg-center">
-      <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 p-[3px] rounded-2xl shadow-lg hover:shadow-pink-400 transition-shadow duration-300">
-        <div className="bg-gray-800 text-white p-12 rounded-2xl w-[500px] h-[500px] flex flex-col justify-between">
-          <h1 className="text-3xl font-bold text-center">Sign Up</h1>
+    <section className="flex items-center justify-center min-h-screen p-4 bg-cover bg-center">
+      <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 p-[3px] rounded-2xl shadow-lg hover:shadow-pink-400 transition-shadow duration-300 w-full max-w-[500px]">
+        <div className="bg-gray-800 text-white p-8 md:p-12 rounded-2xl w-full flex flex-col justify-between">
+          <h1 className="text-3xl font-bold text-center mb-4">Sign Up</h1>
 
           <form onSubmit={submitHandler} className="flex flex-col gap-4">
             <div>
@@ -134,6 +134,8 @@ const Register = () => {
               {isLoading ? "Registering..." : "Register"}
             </button>
           </form>
+
+          {isLoading && <Loader />}
 
           <div className="text-center mt-4">
             <p className="text-gray-300">

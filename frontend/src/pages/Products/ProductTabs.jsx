@@ -114,8 +114,10 @@ const ProductTabs = ({
         {/* Tab 2 - All Reviews */}
         {activeTab === 2 && (
           <div className="mt-4">
-            {product.reviews.length === 0 && <p>No Reviews</p>}
-            {product.reviews.map((review) => (
+            {(!product?.reviews || product.reviews.length === 0) && (
+              <p className="text-gray-400">No Reviews yet</p>
+            )}
+            {product?.reviews?.map((review) => (
               <div
                 key={review._id}
                 className="bg-[#1A1A1A] text-white p-4 rounded-xl mb-4 shadow-md"
@@ -123,7 +125,7 @@ const ProductTabs = ({
                 <div className="flex justify-between">
                   <strong className="text-[#B0B0B0]">{review.name}</strong>
                   <span className="text-[#B0B0B0]">
-                    {review.createdAt.substring(0, 10)}
+                    {review.createdAt ? review.createdAt.substring(0, 10) : ""}
                   </span>
                 </div>
                 <p className="mt-2 mb-3">{review.comment}</p>

@@ -30,23 +30,19 @@ const CategoryList = () => {
     }
 
     try {
-      const result = await createCategory({ name }).unwrap();
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        setName("");
-        toast.success(`${result.name} is created.`);
-      }
+      const result = await createCategory({ name: name.trim() }).unwrap();
+      setName("");
+      toast.success(`${result.name} is created.`);
     } catch (error) {
       console.error(error);
-      toast.error("Creating category failed, try again.");
+      toast.error(error?.data?.message || error?.error || "Creating category failed, try again.");
     }
   };
 
   const handleUpdateCategory = async (e) => {
     e.preventDefault();
 
-    if (!updatingName) {
+    if (!updatingName.trim()) {
       toast.error("Category name is required");
       return;
     }
@@ -55,37 +51,36 @@ const CategoryList = () => {
       const result = await updateCategory({
         categoryId: selectedCategory._id,
         updatedCategory: {
-          name: updatingName,
+          name: updatingName.trim(),
         },
       }).unwrap();
 
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(`${result.name} is updated`);
-        setSelectedCategory(null);
-        setUpdatingName("");
-        setModalVisible(false);
-      }
+      toast.success(`${result.name} is updated`);
+      setSelectedCategory(null);
+      setUpdatingName("");
+      setModalVisible(false);
     } catch (error) {
       console.error(error);
+      toast.error(error?.data?.message || error?.error || "Failed to update category");
     }
   };
 
-  const handleDeleteCategory = async () => {
-    try {
-      const result = await deleteCategory(selectedCategory._id).unwrap();
+  const handleDeleteCategory = async (categoryToDelete) => {
+    const target = categoryToDelete || selectedCategory;
+    if (!target) return;
 
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(`${result.name} is deleted.`);
-        setSelectedCategory(null);
-        setModalVisible(false);
-      }
+    if (!window.confirm(`Are you sure you want to delete "${target.name}"?`)) {
+      return;
+    }
+
+    try {
+      const result = await deleteCategory(target._id).unwrap();
+      toast.success(`${result.name || "Category"} is deleted.`);
+      setSelectedCategory(null);
+      setModalVisible(false);
     } catch (error) {
       console.error(error);
-      toast.error("Category deletion failed. Try again.");
+      toast.error(error?.data?.message || error?.error || "Category deletion failed. Try again.");
     }
   };
 
@@ -120,8 +115,9 @@ const CategoryList = () => {
               </div>
               <div className="flex justify-center mt-4 space-x-4">
                 <button
-                  className="bg-white text-green-600 py-2 px-4 border border-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all"
-                  onClick={() => {
+                  className="bg-white text-green-600 py-2 px-4 border border-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all text-sm font-semibold"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedCategory(category);
                     setModalVisible(true);
                     setUpdatingName(category.name);
@@ -130,10 +126,10 @@ const CategoryList = () => {
                   Edit
                 </button>
                 <button
-                  className="bg-white text-red-600 py-2 px-4 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    handleDeleteCategory();
+                  className="bg-white text-red-600 py-2 px-4 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all text-sm font-semibold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCategory(category);
                   }}
                 >
                   Delete

@@ -2,44 +2,45 @@ import { Link } from "react-router-dom";
 import moment from "moment";
 import { useAllProductsQuery } from "../../redux/api/productApiSlice";
 import AdminMenu from "./AdminMenu";
+import Loader from "../../components/Loader";
+import Message from "../../components/Message";
 import { useEffect, useRef } from "react";
 
 const AllProducts = () => {
-  const { data: products, isLoading, isError } = useAllProductsQuery();
+  const { data: products, isLoading, isError, error } = useAllProductsQuery();
   const cardRefs = useRef([]);
 
   useEffect(() => {
-    const handleMouseMove = (e, index) => {
-      const card = cardRefs.current[index];
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty("--x", `${x}px`);
-      card.style.setProperty("--y", `${y}px`);
-    };
+    const currentCards = cardRefs.current;
+    const handlers = [];
 
-    cardRefs.current.forEach((card, index) => {
+    currentCards.forEach((card) => {
       if (!card) return;
-      card.addEventListener("mousemove", (e) => handleMouseMove(e, index));
+      const handleMouseMove = (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty("--x", `${x}px`);
+        card.style.setProperty("--y", `${y}px`);
+      };
+      card.addEventListener("mousemove", handleMouseMove);
+      handlers.push({ card, handleMouseMove });
     });
 
     return () => {
-      cardRefs.current.forEach((card, index) => {
-        if (!card) return;
-        card.removeEventListener("mousemove", (e) =>
-          handleMouseMove(e, index)
-        );
+      handlers.forEach(({ card, handleMouseMove }) => {
+        card.removeEventListener("mousemove", handleMouseMove);
       });
     };
   }, [products]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error loading products</div>;
+  if (isLoading) return <Loader />;
+  if (isError) return <Message variant="danger">{error?.data?.message || "Error loading products"}</Message>;
 
   return (
     <div className="container mx-auto px-6 py-6 flex flex-col items-center">
       <div className="text-center text-4xl font-bold text-white mb-10">
-        All Products ({products.length})
+        All Products ({products?.length || 0})
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 place-items-center">
@@ -81,9 +82,8 @@ const AllProducts = () => {
                 </p>
 
                 <div className="flex justify-between items-center mt-auto">
-                  <Link
-                    to={`/admin/product/update/${product._id}`}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-lg shadow-md hover:scale-105 transition-transform"
+                  <span
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-lg shadow-md group-hover:scale-105 transition-transform"
                   >
                     Update Product
                     <svg
@@ -99,7 +99,7 @@ const AllProducts = () => {
                         d="M1 5h12m0 0L9 1m4 4L9 9"
                       />
                     </svg>
-                  </Link>
+                  </span>
 
                   <p className="text-lg font-bold text-white">
                     ₹ {product.price}

@@ -4,14 +4,21 @@ import bcrypt from "bcryptjs";
 import createToken from "../utils/createToken.js";
 
 const createUser = asyncHandler(async (req, res) => {
-    const { username, email, password } = req.body;
+  let { username, email, password } = req.body;
 
-    if (!username || !email || !password) {
-        throw new Error("Please fill all the inputs.");
-      }
-    
+  if (!username || !email || !password) {
+    res.status(400);
+    throw new Error("Please fill all the inputs.");
+  }
+
+  username = username.trim();
+  email = email.trim().toLowerCase();
+
   const userExists = await User.findOne({ email });
-  if (userExists) res.status(400).send("User already exists");
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -29,157 +36,190 @@ const createUser = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     res.status(400);
-    throw new Error("Invalid user data");
+    throw new Error("Invalid user data: " + error.message);
   }
-  
-  });
+});
 
-  const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-  
-    // Check if the user exists
-    const existingUser = await User.findOne({ email });
-  
-    if (!existingUser) {
-      // If user doesn't exist, throw an error
-      res.status(404);
-      throw new Error("User does not exist");
-    }
-  
-    // Validate password
-    const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-  
-    if (!isPasswordValid) {
-      // If password is invalid, throw an error
-      res.status(401);
-      throw new Error("Invalid email or password");
-    }
-  
-    // If authentication is successful, create a token and respond
-    createToken(res, existingUser._id);
-  
-    res.status(200).json({
-      _id: existingUser._id,
-      username: existingUser.username,
-      email: existingUser.email,
-      isAdmin: existingUser.isAdmin,
-    });
+const loginUser = asyncHandler(async (req, res) => {
+  let { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Please provide email and password");
+  }
+
+  email = email.trim().toLowerCase();
+
+  const existingUser = await User.findOne({ email });
+
+  if (!existingUser) {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+
+  if (!isPasswordValid) {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
+
+  createToken(res, existingUser._id);
+
+  res.status(200).json({
+    _id: existingUser._id,
+    username: existingUser.username,
+    email: existingUser.email,
+    isAdmin: existingUser.isAdmin,
   });
-  
+});
 
 const logoutCurrentUser = asyncHandler(async (req, res) => {
-    res.cookie("jwt", "", {
-        httyOnly: true,
-        expires: new Date(0),
-      });
-      
-    res.status(200).json({ message: "Logged out successfully" });
+  const isProduction = process.env.NODE_ENV === "production";
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    expires: new Date(0),
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({});
-    res.json(users);
-  });
+  const users = await User.find({}).select("-password");
+  res.json(users);
+});
 
-  const getCurrentUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
-  
-    if (user) {
-      res.json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-      });
-    } else {
-      res.status(404);
-      throw new Error("User not found.");
-    }
-  });
+const getCurrentUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
 
-  const updateCurrentUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
-  
-    if (user) {
-      user.username = req.body.username || user.username;
-      user.email = req.body.email || user.email;
-  
-      if (req.body.password) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(req.body.password, salt);
-        user.password = hashedPassword;
-      }
-  
-      const updatedUser = await user.save();
-  
-      res.json({
-        _id: updatedUser._id,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        isAdmin: updatedUser.isAdmin,
-      });
-    } else {
-      res.status(404);
-      throw new Error("User not found");
-    }
-  });
+  if (user) {
+    res.json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.isAdmin,
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found.");
+  }
+});
 
-  const deleteUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
-  
-    if (user) {
-      if (user.isAdmin) {
+const updateCurrentUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    if (req.body.email && req.body.email.trim().toLowerCase() !== user.email) {
+      const emailExists = await User.findOne({ email: req.body.email.trim().toLowerCase() });
+      if (emailExists) {
         res.status(400);
-        throw new Error("Cannot delete admin user");
+        throw new Error("Email is already taken by another account");
       }
-  
-      await User.deleteOne({ _id: user._id });
-      res.json({ message: "User removed" });
-    } else {
-      res.status(404);
-      throw new Error("User not found.");
+      user.email = req.body.email.trim().toLowerCase();
     }
-  });
 
-  const getUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id).select("-password");
-  
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404);
-      throw new Error("User not found");
+    if (req.body.username) {
+      user.username = req.body.username.trim();
     }
-  });
 
-  const updateUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
-  
-    if (user) {
-      user.username = req.body.username || user.username;
-      user.email = req.body.email || user.email;
+    if (req.body.password && req.body.password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      user.password = hashedPassword;
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
+const deleteUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  if (user) {
+    if (user._id.toString() === req.user._id.toString()) {
+      res.status(400);
+      throw new Error("You cannot delete your own account");
+    }
+
+    if (user.isAdmin) {
+      res.status(400);
+      throw new Error("Cannot delete admin user");
+    }
+
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: "User removed" });
+  } else {
+    res.status(404);
+    throw new Error("User not found.");
+  }
+});
+
+const getUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id).select("-password");
+
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
+const updateUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  if (user) {
+    if (req.body.email && req.body.email.trim().toLowerCase() !== user.email) {
+      const emailExists = await User.findOne({ email: req.body.email.trim().toLowerCase() });
+      if (emailExists) {
+        res.status(400);
+        throw new Error("Email is already in use");
+      }
+      user.email = req.body.email.trim().toLowerCase();
+    }
+
+    if (req.body.username) {
+      user.username = req.body.username.trim();
+    }
+
+    if (req.body.isAdmin !== undefined) {
       user.isAdmin = Boolean(req.body.isAdmin);
-  
-      const updatedUser = await user.save();
-  
-      res.json({
-        _id: updatedUser._id,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        isAdmin: updatedUser.isAdmin,
-      });
-    } else {
-      res.status(404);
-      throw new Error("User not found");
     }
-  });
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
 
 export {
   createUser,
   loginUser,
   logoutCurrentUser,
   getAllUsers,
-  getCurrentUserProfile, 
-  updateCurrentUserProfile, 
+  getCurrentUserProfile,
+  updateCurrentUserProfile,
   deleteUserById,
   getUserById,
-  updateUserById};
+  updateUserById,
+};

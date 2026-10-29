@@ -1,27 +1,29 @@
 const Modal = ({ isOpen, onClose, children }) => {
-  return (
-    <>
-      {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          {/* Background overlay */}
-          <div className="fixed inset-0 bg-black opacity-50"></div>
+  if (!isOpen) return null;
 
-          {/* Modal content */}
-          <div className="absolute top-[40%] left-[50%] transform -translate-x-1/2 bg-gradient-to-br from-purple-600 via-rose-500 to-orange-500 p-[3px] rounded-2xl shadow-lg z-10">
-            <div className="bg-gray-800 p-6 rounded-2xl text-white relative">
-              {/* Close button */}
-              <button
-                className="absolute top-2 right-2 text-white text-xl font-semibold hover:text-gray-300 focus:outline-none"
-                onClick={onClose}
-              >
-                X
-              </button>
-              {children}
-            </div>
-          </div>
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+      {/* Background overlay */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal content */}
+      <div className="relative bg-gradient-to-br from-purple-600 via-rose-500 to-orange-500 p-[3px] rounded-2xl shadow-2xl z-10 w-full max-w-lg">
+        <div className="bg-gray-800 p-6 rounded-2xl text-white relative">
+          {/* Close button */}
+          <button
+            className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl font-bold transition-colors focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+          {children}
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 

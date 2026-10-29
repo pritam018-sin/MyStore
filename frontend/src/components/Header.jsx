@@ -11,22 +11,24 @@ const Header = () => {
   }
 
   if (error) {
-    return <h1 className="text-center text-red-500">ERROR</h1>;
+    return null;
   }
 
   return (
-    <div className="container mx-auto p-3">
+    <div className="container mx-auto p-4">
       {/* Main Wrapper */}
-      <div className="flex justify-between gap-4">
-        {/* Grid layout for small products, with added flexibility to prevent collapsing */}
-        <div className="grid grid-cols-1 gap-4 w-1/2">
-          {data.slice(0, 2).map((product) => (
+      <div className="flex flex-col xl:flex-row justify-between items-center gap-6">
+        {/* Grid layout for small products */}
+        <div className="hidden xl:grid grid-cols-1 md:grid-cols-2 gap-4 w-full xl:w-1/2">
+          {data?.slice(0, 2).map((product) => (
             <SmallProduct key={product._id} product={product} />
           ))}
         </div>
 
         {/* Product Carousel (Image Slider) */}
-        <ProductCarousel />
+        <div className="w-full xl:w-1/2">
+          <ProductCarousel />
+        </div>
       </div>
     </div>
   );

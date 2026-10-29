@@ -1,49 +1,40 @@
-import { useEffect } from "react";
-import { FaHeart, FaRegHeart, FaVaadin } from "react-icons/fa";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import {
   addToFavorites,
   removeFromFavorites,
-  setFavorites,
 } from "../../redux/features/favorites/favoriteSlice";
-
-import {
-  addFavoriteToLocalStorage,
-  getFavoritesFromLocalStorage,
-  removeFavoriteFromLocalStorage,
-} from "../../utils/localStorage.js";
 
 const HeartIcon = ({ product }) => {
   const dispatch = useDispatch();
   const favorites = useSelector((state) => state.favorites) || [];
-  const isFavorite = favorites.some((p) => p._id === product._id);
+  const isFavorite = favorites.some((p) => p._id === product?._id);
 
-  useEffect(() => {
-    const favoritesFromLocalStorage = getFavoritesFromLocalStorage();
-    dispatch(setFavorites(favoritesFromLocalStorage));
-  }, []);
+  const toggleFavorites = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const toggleFavorites = () => {
+    if (!product) return;
+
     if (isFavorite) {
       dispatch(removeFromFavorites(product));
-      // remove the product from the localStorage as well
-      removeFavoriteFromLocalStorage(product._id);
     } else {
       dispatch(addToFavorites(product));
-      // add the product to localStorage as well
-      addFavoriteToLocalStorage(product);
     }
   };
 
   return (
     <div
-      className="absolute top-2 right-5 cursor-pointer"
+      className="absolute top-2 right-5 cursor-pointer z-20"
       onClick={toggleFavorites}
+      role="button"
+      tabIndex={0}
+      aria-label={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
     >
       {isFavorite ? (
-        <FaHeart className="text-violet-500" />
+        <FaHeart className="text-violet-500 text-xl transition-transform hover:scale-110" />
       ) : (
-        <FaRegHeart className="text-white" />
+        <FaRegHeart className="text-white text-xl transition-transform hover:scale-110" />
       )}
     </div>
   );

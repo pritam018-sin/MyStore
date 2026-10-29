@@ -24,8 +24,11 @@ const PlaceOrder = () => {
       navigate("/shipping");
     }
 
-    if (cardRef.current) {
-      VanillaTilt.init(cardRef.current, {
+    const currentCard = cardRef.current;
+    const currentTable = tableRef.current;
+
+    if (currentCard) {
+      VanillaTilt.init(currentCard, {
         max: 10,
         speed: 400,
         glare: true,
@@ -34,8 +37,8 @@ const PlaceOrder = () => {
       });
     }
 
-    if (tableRef.current) {
-      VanillaTilt.init(tableRef.current, {
+    if (currentTable) {
+      VanillaTilt.init(currentTable, {
         max: 10,
         speed: 400,
         glare: true,
@@ -43,6 +46,15 @@ const PlaceOrder = () => {
         scale: 1.02,
       });
     }
+
+    return () => {
+      if (currentCard?.vanillaTilt) {
+        currentCard.vanillaTilt.destroy();
+      }
+      if (currentTable?.vanillaTilt) {
+        currentTable.vanillaTilt.destroy();
+      }
+    };
   }, [cart.shippingAddress.address, navigate]);
 
   const placeOrderHandler = async () => {
@@ -67,7 +79,7 @@ const PlaceOrder = () => {
   return (
     <>
       <ProgressSteps step1 step2 step3 />
-      <div className="container mx-auto mt-20 p-6">
+      <div className="container mx-auto mt-10 md:mt-16 p-4 md:p-6">
         {cart.cartItems.length === 0 ? (
           <Message>Your cart is empty</Message>
         ) : (
@@ -97,15 +109,19 @@ const PlaceOrder = () => {
                     </td>
                     <td className="p-4">
                       <Link
-                        to={`/product/${item.product}`}
+                        to={`/product/${item._id || item.product}`}
                         className="hover:underline text-blue-200"
                       >
                         {item.name}
                       </Link>
                     </td>
                     <td className="p-4 text-gray-200">{item.qty}</td>
-                    <td className="p-4 text-gray-200">₹ {item.price.toFixed(2)}</td>
-                    <td className="p-4 text-gray-200">₹ {(item.qty * item.price).toFixed(2)}</td>
+                    <td className="p-4 text-gray-200">
+                      ₹ {Number(item.price).toFixed(2)}
+                    </td>
+                    <td className="p-4 text-gray-200">
+                      ₹ {(item.qty * item.price).toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

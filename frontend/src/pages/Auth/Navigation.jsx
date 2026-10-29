@@ -24,15 +24,7 @@ const Navigation = () => {
   const [showSidebar, setShowSidebar] = useState(false);
 
   const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);  // Toggle dropdown visibility on click
-  };
-
-  const toggleSidebar = () => {
-    setShowSidebar(!showSidebar);
-  };
-
-  const closeSidebar = () => {
-    setShowSidebar(false);
+    setDropdownOpen(!dropdownOpen); // Toggle dropdown visibility on click
   };
 
   const dispatch = useDispatch();
@@ -220,27 +212,27 @@ const Navigation = () => {
       )}
 
       {/* If no user is logged in, show login and register options */}
-      {!userInfo  && (
-       <ul className="space-y-4">
-       <li>
-         <Link
-           to="/login"
-           className="flex items-center transition-transform transform hover:translate-x-2 hover:text-purple-300"
-         >
-           <AiOutlineLogin className="mr-2 mt-[4px]" size={26} />
-           <span className="hidden nav-item-name">LOGIN</span>
-         </Link>
-       </li>
-       <li>
-         <Link
-           to="/register"
-           className="flex items-center transition-transform transform hover:translate-x-2 hover:text-purple-300"
-         >
-           <AiOutlineUserAdd className="mr-2 mt-[4px]" size={26} />
-           <span className="hidden nav-item-name">REGISTER</span>
-         </Link>
-       </li>
-     </ul>
+      {!userInfo && (
+        <ul className="space-y-4">
+          <li>
+            <Link
+              to="/login"
+              className="flex items-center transition-transform transform hover:translate-x-2 hover:text-purple-300"
+            >
+              <AiOutlineLogin className="mr-2 mt-[4px]" size={26} />
+              {showSidebar && <span className="nav-item-name">LOGIN</span>}
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/register"
+              className="flex items-center transition-transform transform hover:translate-x-2 hover:text-purple-300"
+            >
+              <AiOutlineUserAdd className="mr-2 mt-[4px]" size={26} />
+              {showSidebar && <span className="nav-item-name">REGISTER</span>}
+            </Link>
+          </li>
+        </ul>
       )}
     </div>
   );

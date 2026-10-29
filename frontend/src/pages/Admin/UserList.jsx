@@ -26,12 +26,13 @@ const UserList = () => {
   }, [refetch]);
 
   const deleteHandler = async (id) => {
-    if (window.confirm("Are you sure")) {
+    if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await deleteUser(id);
+        await deleteUser(id).unwrap();
+        toast.success("User deleted successfully");
         refetch();
       } catch (err) {
-        toast.error(err?.data?.message || err.error);
+        toast.error(err?.data?.message || err?.error || "Failed to delete user");
       }
     }
   };
@@ -42,17 +43,24 @@ const UserList = () => {
     setEditableUserEmail(email);
   };
 
+  const cancelEdit = () => {
+    setEditableUserId(null);
+    setEditableUserName("");
+    setEditableUserEmail("");
+  };
+
   const updateHandler = async (id) => {
     try {
       await updateUser({
         userId: id,
         username: editableUserName,
         email: editableUserEmail,
-      });
+      }).unwrap();
       setEditableUserId(null);
+      toast.success("User updated successfully");
       refetch();
     } catch (err) {
-      toast.error(err?.data?.message || err.error);
+      toast.error(err?.data?.message || err?.error || "Failed to update user");
     }
   };
 
@@ -76,7 +84,7 @@ const UserList = () => {
           <Message variant="danger">{error?.data?.message || error.error}</Message>
         ) : (
           <div className="overflow-x-auto rounded-lg shadow-lg bg-white">
-            <table className="w-full max-w-[115%] mx-auto table-auto">
+            <table className="w-full mx-auto table-auto">
               <thead className="bg-gradient-to-r from-purple-600 via-red-500 to-purple-800 text-white hover:bg-gradient-to-r hover:from-purple-700 hover:via-red-600 hover:to-purple-900 transition-all duration-300">
                 <tr>
                   <th className="px-4 py-2 text-left">ID</th>
@@ -97,7 +105,7 @@ const UserList = () => {
                     </td>
                     <td className="px-4 py-2">
                       {editableUserId === user._id ? (
-                        <div className="flex items-center">
+                        <div className="flex items-center space-x-1">
                           <input
                             type="text"
                             value={editableUserName}
@@ -106,9 +114,17 @@ const UserList = () => {
                           />
                           <button
                             onClick={() => updateHandler(user._id)}
-                            className="ml-2 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 hover:ring-4 hover:ring-blue-500 transition-all duration-300"
+                            className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
+                            title="Save"
                           >
                             <FaCheck />
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition-all duration-300"
+                            title="Cancel"
+                          >
+                            <FaTimes />
                           </button>
                         </div>
                       ) : (
@@ -127,7 +143,7 @@ const UserList = () => {
                     </td>
                     <td className="px-4 py-2">
                       {editableUserId === user._id ? (
-                        <div className="flex items-center">
+                        <div className="flex items-center space-x-1">
                           <input
                             type="text"
                             value={editableUserEmail}
@@ -136,9 +152,17 @@ const UserList = () => {
                           />
                           <button
                             onClick={() => updateHandler(user._id)}
-                            className="ml-2 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 hover:ring-4 hover:ring-blue-500 transition-all duration-300"
+                            className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
+                            title="Save"
                           >
                             <FaCheck />
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition-all duration-300"
+                            title="Cancel"
+                          >
+                            <FaTimes />
                           </button>
                         </div>
                       ) : (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,7 +9,7 @@ import ProgressSteps from "../../components/ProgressSteps";
 
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
-  const { shippingAddress } = cart;
+  const { shippingAddress = {} } = cart;
 
   const [paymentMethod, setPaymentMethod] = useState("PayPal");
   const [address, setAddress] = useState(shippingAddress.address || "");
@@ -27,19 +27,13 @@ const Shipping = () => {
     navigate("/placeorder");
   };
 
-  useEffect(() => {
-    if (!shippingAddress.address) {
-      navigate("/shipping");
-    }
-  }, [navigate, shippingAddress]);
-
   return (
-    <div className="container mx-auto mt-10 px-4">
+    <div className="container mx-auto mt-6 md:mt-10 px-4">
       <ProgressSteps step1 step2 />
-      <div className="mt-[8rem] flex justify-center items-center">
+      <div className="mt-8 md:mt-12 flex justify-center items-center">
         <form
           onSubmit={submitHandler}
-          className="w-full max-w-xl p-8 rounded-2xl backdrop-blur-md bg-white/5 border border-white/10 hover:border-violet-400 transition-all duration-300 shadow-md"
+          className="w-full max-w-xl p-6 sm:p-8 rounded-2xl backdrop-blur-md bg-white/5 border border-white/10 hover:border-violet-400 transition-all duration-300 shadow-md"
         >
           <h1 className="text-3xl font-bold mb-6 text-white text-center">Shipping Info</h1>
 

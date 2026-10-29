@@ -3,255 +3,218 @@ import Product from "../models/productModel.js";
 import { cloudinaryUpload } from "../utils/cloudnaryServices.js";
 
 const addProduct = asyncHandler(async (req, res) => {
-  try {
-    const { name, description, price, category, quantity, brand } = req.body;
+  const { name, description, price, category, quantity, brand, countInStock } = req.body;
 
-    // Validation
-    switch (true) {
-      case !name:
-        return res.status(400).json({ error: "Name is required" });
-      case !brand:
-        return res.status(400).json({ error: "Brand is required" });
-      case !description:
-        return res.status(400).json({ error: "Description is required" });
-      case !price:
-        return res.status(400).json({ error: "Price is required" });
-      case !category:
-        return res.status(400).json({ error: "Category is required" });
-      case !quantity:
-        return res.status(400).json({ error: "Quantity is required" });
-    }
-
-    const imageLocalPath = req.file?.path;
-
-    if (!imageLocalPath) {
-      return res.status(400).json({ error: "Image file is required" });
-    }
-
-    // Upload image to Cloudinary
-    const image = await cloudinaryUpload(imageLocalPath);
-
-    if (!image) {
-      return res.status(400).json({ error: "Image upload failed" });
-    }
-
-    const product = await Product.create({
-      name,
-      description,
-      price,
-      category,
-      quantity,
-      brand,
-      image: image.url || "",
-    });
-
-    await product.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Product added successfully",
-      product,
-    });
-  } catch (error) {
-    console.error("Error adding product:", error);
-    res.status(500).json({
-      success: false,
-      message: "Something went wrong while adding product",
-      error: error.message,
-    });
+  // Validation
+  if (!name || !name.trim()) {
+    res.status(400);
+    throw new Error("Name is required");
   }
+  if (!brand || !brand.trim()) {
+    res.status(400);
+    throw new Error("Brand is required");
+  }
+  if (!description || !description.trim()) {
+    res.status(400);
+    throw new Error("Description is required");
+  }
+  if (price === undefined || price === "") {
+    res.status(400);
+    throw new Error("Price is required");
+  }
+  if (!category) {
+    res.status(400);
+    throw new Error("Category is required");
+  }
+  if (quantity === undefined || quantity === "") {
+    res.status(400);
+    throw new Error("Quantity is required");
+  }
+
+  const imageLocalPath = req.file?.path;
+  if (!imageLocalPath) {
+    res.status(400);
+    throw new Error("Image file is required");
+  }
+
+  // Upload image to Cloudinary
+  const image = await cloudinaryUpload(imageLocalPath);
+  if (!image) {
+    res.status(400);
+    throw new Error("Image upload failed");
+  }
+
+  const product = new Product({
+    name: name.trim(),
+    description: description.trim(),
+    price: Number(price),
+    category,
+    quantity: Number(quantity),
+    brand: brand.trim(),
+    image: image.secure_url || image.url || "",
+    countInStock: countInStock !== undefined && countInStock !== "" ? Number(countInStock) : Number(quantity),
+  });
+
+  await product.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Product added successfully",
+    product,
+  });
 });
 
 const updateProductDetails = asyncHandler(async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, description, price, category, quantity, brand } = req.body;
-    // ✅ Upload new image if provided
-    const imageLocalPath = req.file?.path;
+  const { id } = req.params;
+  const { name, description, price, category, quantity, brand, countInStock } = req.body;
 
-    if (!imageLocalPath) {
-      return res.status(400).json({ error: "Image file is required" });
-    }
-    const image = await cloudinaryUpload(imageLocalPath);
-
-    if (!image) {
-      return res.status(400).json({ error: "Image upload failed" });
-    }
-    // ✅ Update only provided fields
-    const product = await Product.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          name,
-          description,
-          price,
-          category,
-          quantity,
-          brand,
-          image: image.url,
-        },
-      },
-      { new: true }
-    )
-    await product.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      product,
-    });
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({
-      success: false,
-      message: "Something went wrong while updating product",
-      error: error.message,
-    });
+  const product = await Product.findById(id);
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
   }
+
+  // If a new image was uploaded, send to Cloudinary
+  if (req.file?.path) {
+    const uploadedImage = await cloudinaryUpload(req.file.path);
+    if (!uploadedImage) {
+      res.status(400);
+      throw new Error("New image upload failed");
+    }
+    product.image = uploadedImage.secure_url || uploadedImage.url;
+  }
+
+  if (name !== undefined) product.name = name.trim();
+  if (description !== undefined) product.description = description.trim();
+  if (price !== undefined && price !== "") product.price = Number(price);
+  if (category !== undefined && category !== "") product.category = category;
+  if (quantity !== undefined && quantity !== "") product.quantity = Number(quantity);
+  if (brand !== undefined) product.brand = brand.trim();
+  if (countInStock !== undefined && countInStock !== "") {
+    product.countInStock = Number(countInStock);
+  } else if (quantity !== undefined && quantity !== "") {
+    product.countInStock = Number(quantity);
+  }
+
+  const updatedProduct = await product.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Product updated successfully",
+    product: updatedProduct,
+  });
 });
+
 const removeProduct = asyncHandler(async (req, res) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    res.json(product);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+  const product = await Product.findByIdAndDelete(req.params.id);
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
   }
+  res.json(product);
 });
 
 const fetchProducts = asyncHandler(async (req, res) => {
-  try {
-    const pageSize = 6;
+  const pageSize = 6;
 
-    const keyword = req.query.keyword
-      ? {
-          name: {
-            $regex: req.query.keyword,
-            $options: "i",
-          },
-        }
-      : {};
+  const keyword = req.query.keyword
+    ? {
+        name: {
+          $regex: req.query.keyword,
+          $options: "i",
+        },
+      }
+    : {};
 
-    const count = await Product.countDocuments({ ...keyword });
-    const products = await Product.find({ ...keyword }).limit(pageSize);
+  const count = await Product.countDocuments({ ...keyword });
+  const products = await Product.find({ ...keyword }).limit(pageSize);
 
-    res.json({
-      products,
-      page: 1,
-      pages: Math.ceil(count / pageSize),
-      hasMore: false,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server Error" });
-  }
+  res.json({
+    products,
+    page: 1,
+    pages: Math.ceil(count / pageSize),
+    hasMore: false,
+  });
 });
 
 const fetchProductById = asyncHandler(async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (product) {
-      return res.json(product);
-    } else {
-      res.status(404);
-      throw new Error("Product not found");
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(404).json({ error: "Product not found" });
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
   }
+  res.json(product);
 });
 
 const fetchAllProducts = asyncHandler(async (req, res) => {
-  try {
-    const products = await Product.find({})
-      .populate("category")
-      .limit(12)
-      .sort({ createAt: -1 });
+  const products = await Product.find({})
+    .populate("category")
+    .sort({ createdAt: -1 });
 
-    res.json(products);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server Error" });
-  }
+  res.json(products);
 });
 
 const addProductReview = asyncHandler(async (req, res) => {
-  try {
-    const { rating, comment } = req.body;
-    const product = await Product.findById(req.params.id);
+  const { rating, comment } = req.body;
+  const product = await Product.findById(req.params.id);
 
-    if (product) {
-      const alreadyReviewed = product.reviews.find(
-        (r) => r.user.toString() === req.user._id.toString()
-      );
-
-      if (alreadyReviewed) {
-        res.status(400);
-        throw new Error("Product already reviewed");
-      }
-
-      const review = {
-        name: req.user.username,
-        rating: Number(rating),
-        comment,
-        user: req.user._id,
-      };
-
-      product.reviews.push(review);
-
-      product.numReviews = product.reviews.length;
-
-      product.rating =
-        product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-        product.reviews.length;
-
-      await product.save();
-      res.status(201).json({ message: "Review added" });
-    } else {
-      res.status(404);
-      throw new Error("Product not found");
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(400).json(error.message);
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
   }
+
+  const alreadyReviewed = product.reviews.find(
+    (r) => r.user.toString() === req.user._id.toString()
+  );
+
+  if (alreadyReviewed) {
+    res.status(400);
+    throw new Error("Product already reviewed");
+  }
+
+  const review = {
+    name: req.user.username,
+    rating: Number(rating),
+    comment: comment ? comment.trim() : "",
+    user: req.user._id,
+  };
+
+  product.reviews.push(review);
+  product.numReviews = product.reviews.length;
+  product.rating =
+    Math.round(
+      (product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+        product.reviews.length) *
+        10
+    ) / 10;
+
+  await product.save();
+  res.status(201).json({ message: "Review added" });
 });
 
 const fetchTopProducts = asyncHandler(async (req, res) => {
-  try {
-    const products = await Product.find({}).sort({ rating: -1 }).limit(4);
-    res.json(products);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json(error.message);
-  }
+  const products = await Product.find({}).sort({ rating: -1 }).limit(4);
+  res.json(products);
 });
 
 const fetchNewProducts = asyncHandler(async (req, res) => {
-  try {
-    const products = await Product.find().sort({ _id: -1 }).limit(5);
-    res.json(products);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json(error.message);
-  }
+  const products = await Product.find().sort({ _id: -1 }).limit(5);
+  res.json(products);
 });
 
 const filterProducts = asyncHandler(async (req, res) => {
-  try {
-    const { checked, radio } = req.body;
+  const { checked, radio } = req.body || {};
 
-    let args = {};
-    if (checked.length > 0) args.category = checked;
-    if (radio.length) args.price = { $gte: radio[0], $lte: radio[1] };
-
-    const products = await Product.find(args);
-    res.json(products);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server Error" });
+  let args = {};
+  if (Array.isArray(checked) && checked.length > 0) {
+    args.category = { $in: checked };
   }
+  if (Array.isArray(radio) && radio.length === 2) {
+    args.price = { $gte: Number(radio[0]), $lte: Number(radio[1]) };
+  }
+
+  const products = await Product.find(args);
+  res.json(products);
 });
 
 export {

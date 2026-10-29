@@ -8,7 +8,7 @@ import { FaShoppingCart } from "react-icons/fa"; // Importing the shop icon
 
 const Home = () => {
   const { keyword } = useParams();
-  const { data, isLoading, isError } = useGetProductsQuery({ keyword });
+  const { data, isLoading, isError, error } = useGetProductsQuery({ keyword });
 
   return (
     <>
@@ -17,13 +17,13 @@ const Home = () => {
         <Loader />
       ) : isError ? (
         <Message variant="danger">
-          {isError?.data?.message || isError.error}
+          {error?.data?.message || error?.error || "Error loading products"}
         </Message>
       ) : (
         <>
           {/* Title & Shop Button */}
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center mt-8 px-3">
-            <h1 className="text-3xl md:text-4xl font-bold text-center md:text-left">
+          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center mt-8 px-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-center md:text-left text-white">
               Special Products
             </h1>
 
@@ -37,13 +37,13 @@ const Home = () => {
 
           {/* Product Listing */}
           <div className="container mx-auto mt-6 px-4">
-            <div className="grid grid-cols- sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {data?.products?.length > 0 ? (
                 data.products.map((product) => (
                   <Product key={product._id} product={product} />
                 ))
               ) : (
-                <p className="text-center text-gray-500">No products available.</p>
+                <p className="text-center text-gray-400 col-span-3">No products available.</p>
               )}
             </div>
           </div>

@@ -2,77 +2,74 @@ import Category from "../models/categoryModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 
 const createCategory = asyncHandler(async (req, res) => {
-  try {
-    const { name } = req.body;
+  const { name } = req.body;
 
-    if (!name) {
-      return res.json({ error: "Name is required" });
-    }
-
-    const existingCategory = await Category.findOne({ name });
-
-    if (existingCategory) {
-      return res.json({ error: "Already exists" });
-    }
-
-    const category = await new Category({ name }).save();
-    res.json(category);
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json(error);
+  if (!name || !name.trim()) {
+    res.status(400);
+    throw new Error("Name is required");
   }
+
+  const trimmedName = name.trim();
+  const existingCategory = await Category.findOne({ name: trimmedName });
+
+  if (existingCategory) {
+    res.status(400);
+    throw new Error("Category already exists");
+  }
+
+  const category = await new Category({ name: trimmedName }).save();
+  res.status(201).json(category);
 });
 
 const updateCategory = asyncHandler(async (req, res) => {
-  try {
-    const { name } = req.body;
-    const { categoryId } = req.params;
+  const { name } = req.body;
+  const categoryId = req.params.categoryId || req.params.id;
 
-    const category = await Category.findOne({ _id: categoryId });
-
-    if (!category) {
-      return res.status(404).json({ error: "Category not found" });
-    }
-
-    category.name = name;
-
-    const updatedCategory = await category.save();
-    res.json(updatedCategory);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+  if (!name || !name.trim()) {
+    res.status(400);
+    throw new Error("Name is required");
   }
+
+  const category = await Category.findById(categoryId);
+
+  if (!category) {
+    res.status(404);
+    throw new Error("Category not found");
+  }
+
+  category.name = name.trim();
+
+  const updatedCategory = await category.save();
+  res.json(updatedCategory);
 });
 
 const removeCategory = asyncHandler(async (req, res) => {
-  try {
-    const removed = await Category.findByIdAndDelete(req.params.categoryId);
+  const categoryId = req.params.categoryId || req.params.id;
+  const removed = await Category.findByIdAndDelete(categoryId);
 
-    res.json(removed);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+  if (!removed) {
+    res.status(404);
+    throw new Error("Category not found");
   }
+
+  res.json(removed);
 });
 
 const listCategory = asyncHandler(async (req, res) => {
-  try {
-    const all = await Category.find({});
-    res.json(all);
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json(error.message);
-  }
+  const all = await Category.find({});
+  res.json(all);
 });
 
 const readCategory = asyncHandler(async (req, res) => {
-  try {
-    const category = await Category.findOne({ _id: req.params.id });
-    res.json(category);
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json(error.message);
+  const categoryId = req.params.categoryId || req.params.id;
+  const category = await Category.findById(categoryId);
+
+  if (!category) {
+    res.status(404);
+    throw new Error("Category not found");
   }
+
+  res.json(category);
 });
 
 export {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { useProfileMutation } from "../../redux/api/usersApiSlice";
@@ -16,34 +17,44 @@ const Profile = () => {
     useProfileMutation();
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    setUserName(userInfo.username);
-    setEmail(userInfo.email);
-  }, [userInfo.email, userInfo.username]);
+    if (userInfo) {
+      setUserName(userInfo.username || "");
+      setEmail(userInfo.email || "");
+    }
+  }, [userInfo]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
+    if (password && password !== confirmPassword) {
       toast.error("Passwords do not match");
-    } else {
-      try {
-        const res = await updateProfile({
-          _id: userInfo._id,
-          username,
-          email,
-          password,
-        }).unwrap();
-        dispatch(setCredentials({ ...res }));
-        toast.success("Profile updated successfully");
-      } catch (err) {
-        toast.error(err?.data?.message || err.error);
+      return;
+    }
+
+    try {
+      const updateData = {
+        _id: userInfo._id,
+        username,
+        email,
+      };
+      if (password) {
+        updateData.password = password;
       }
+
+      const res = await updateProfile(updateData).unwrap();
+      dispatch(setCredentials({ ...res }));
+      toast.success("Profile updated successfully");
+      setPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      toast.error(err?.data?.message || err?.error || "Failed to update profile");
     }
   };
 
   const handleOrders = () => {
-    window.location.href = "/user-orders";
+    navigate("/user-orders");
   };
 
   return (

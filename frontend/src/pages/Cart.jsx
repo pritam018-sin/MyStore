@@ -68,7 +68,7 @@ const Cart = () => {
                       addToCartHandler(item, Number(e.target.value))
                     }
                   >
-                    {[...Array(item.countInStock).keys()].map((x) => (
+                    {[...Array(Math.min(Math.max(1, item.countInStock || 1), 10)).keys()].map((x) => (
                       <option key={x + 1} value={x + 1}>
                         {x + 1}
                       </option>

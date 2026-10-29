@@ -20,18 +20,19 @@ const CategoryForm = ({
             onChange={(e) => setValue(e.target.value)}
           />
 
-          <div className="flex justify-between mt-4">
+          <div className="flex gap-4 mt-4">
             <button
               type="submit"
-              className="w-full py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-lg shadow-lg hover:shadow-fuchsia-400 transition-all duration-300 hover:scale-105"
+              className="flex-1 py-2 px-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-lg shadow-lg hover:shadow-fuchsia-400 transition-all duration-300 hover:scale-105 font-medium"
             >
               {buttonText}
             </button>
 
             {handleDelete && (
               <button
+                type="button"
                 onClick={handleDelete}
-                className="w-full py-2 bg-gradient-to-br from-red-500 to-pink-500 text-white rounded-lg shadow-lg hover:shadow-pink-400 transition-all duration-300 hover:scale-105"
+                className="flex-1 py-2 px-4 bg-gradient-to-br from-red-500 to-pink-500 text-white rounded-lg shadow-lg hover:shadow-pink-400 transition-all duration-300 hover:scale-105 font-medium"
               >
                 Delete
               </button>

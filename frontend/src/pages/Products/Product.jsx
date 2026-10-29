@@ -8,13 +8,22 @@ const Product = ({ product }) => {
   const tiltRef = useRef(null);
 
   useEffect(() => {
-    VanillaTilt.init(tiltRef.current, {
-      max: 10,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.2,
-      scale: 1.02,
-    });
+    const el = tiltRef.current;
+    if (el) {
+      VanillaTilt.init(el, {
+        max: 10,
+        speed: 400,
+        glare: true,
+        "max-glare": 0.2,
+        scale: 1.02,
+      });
+    }
+
+    return () => {
+      if (el && el.vanillaTilt) {
+        el.vanillaTilt.destroy();
+      }
+    };
   }, []);
 
   return (

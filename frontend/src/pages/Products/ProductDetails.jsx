@@ -47,25 +47,27 @@ const ProductDetails = () => {
     try {
       await createReview({ productId, rating, comment }).unwrap();
       refetch();
+      setRating(0);
+      setComment("");
       toast.success("Review created successfully");
-    } catch (error) {
-      toast.error(error?.data || error.message);
+    } catch (err) {
+      toast.error(err?.data?.message || err?.data || err.message || "Failed to add review");
     }
   };
 
   const addToCartHandler = () => {
-    dispatch(addToCart({ ...product, qty }));
+    dispatch(addToCart({ ...product, qty: Number(qty) }));
     navigate("/cart");
   };
 
   return (
-    <>
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
       <div>
         <Link
           to="/"
-          className="text-white font-semibold hover:underline ml-40"
+          className="text-white font-semibold hover:underline"
         >
-          Go Back
+          ← Go Back
         </Link>
       </div>
 
@@ -76,14 +78,14 @@ const ProductDetails = () => {
           {error?.data?.message || error.message}
         </Message>
       ) : (
-        <div className="flex flex-col md:flex-row items-start mt-10 ml-40 mb-10">
+        <div className="flex flex-col md:flex-row items-start mt-8 gap-8 mb-10">
           {/* Product Image with Glow Hover */}
           <div className="md:w-1/2 w-full relative group">
             <div className="relative overflow-hidden rounded-xl transition-all">
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-[620px] h-[620px] object-cover rounded-xl border-2 border-neutral-800 group-hover:shadow-[0_0_60px_rgba(236,72,153,0.5)] transition-all duration-500 ease-in-out"
+                className="w-full max-h-[550px] object-cover rounded-xl border-2 border-neutral-800 group-hover:shadow-[0_0_60px_rgba(236,72,153,0.5)] transition-all duration-500 ease-in-out"
               />
               <div className="absolute top-2 right-2">
                 <HeartIcon product={product} />
@@ -92,7 +94,7 @@ const ProductDetails = () => {
           </div>
 
           {/* Product Details */}
-          <div className="md:w-1/2 w-full px-8">
+          <div className="md:w-1/2 w-full px-2 md:px-6">
             <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-orange-400 mb-2">
               {product.name}
             </h2>
@@ -141,7 +143,7 @@ const ProductDetails = () => {
                   onChange={(e) => setQty(e.target.value)}
                   className="px-3 py-2 rounded-lg bg-white text-black font-semibold"
                 >
-                  {[...Array(product.countInStock).keys()].map((x) => (
+                  {[...Array(Math.min(product.countInStock, 10)).keys()].map((x) => (
                     <option key={x + 1} value={x + 1}>
                       {x + 1}
                     </option>
@@ -163,7 +165,7 @@ const ProductDetails = () => {
 
       {/* Tabs Section */}
       {!isLoading && product && (
-        <div className="mt-12 ml-40">
+        <div className="mt-12">
           <ProductTabs
             loadingProductReview={loadingProductReview}
             userInfo={userInfo}
@@ -176,7 +178,7 @@ const ProductDetails = () => {
           />
         </div>
       )}
-    </>
+    </div>
   );
 };
 

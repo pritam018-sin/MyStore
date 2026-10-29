@@ -9,14 +9,16 @@ import {
 } from "../controllers/categoryController.js";
 
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
-
-router.route("/").post(authenticate, authorizeAdmin, createCategory);
-router.route("/:categoryId").put(authenticate, authorizeAdmin, updateCategory);
-router
-  .route("/:categoryId")
-  .delete(authenticate, authorizeAdmin, removeCategory);
+import checkId from "../middlewares/checkId.js";
 
 router.route("/categories").get(listCategory);
-router.route("/:id").get(readCategory);
+
+router.route("/").post(authenticate, authorizeAdmin, createCategory);
+
+router
+  .route("/:categoryId")
+  .get(checkId, readCategory)
+  .put(authenticate, authorizeAdmin, checkId, updateCategory)
+  .delete(authenticate, authorizeAdmin, checkId, removeCategory);
 
 export default router;

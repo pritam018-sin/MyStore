@@ -49,17 +49,12 @@ const ProductList = () => {
       formData.append("brand", brand);
       formData.append("countInStock", stock);
 
-      const { data } = await createProduct(formData);
-
-      if (data?.error) {
-        toast.error(data.error || "Product create failed");
-      } else {
-        toast.success(`${data?.name || "Product"} created successfully`);
-        navigate("/admin/allproductslist");
-      }
+      const res = await createProduct(formData).unwrap();
+      toast.success(`${res?.product?.name || res?.name || "Product"} created successfully`);
+      navigate("/admin/allproductslist");
     } catch (error) {
       console.error(error);
-      toast.error(error?.data?.message || "Something went wrong");
+      toast.error(error?.data?.message || error?.data?.error || error?.error || "Failed to create product");
     }
   };
 

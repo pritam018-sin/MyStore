@@ -17,30 +17,25 @@ import checkId from "../middlewares/checkId.js";
 
 const router = express.Router();
 
-// ✅ Fetch and Create Product (with image upload)
+// Specific routes first
 router
   .route("/")
   .get(fetchProducts)
   .post(authenticate, authorizeAdmin, upload.single("image"), addProduct);
 
-// ✅ All products
 router.route("/allproducts").get(fetchAllProducts);
+router.route("/top").get(fetchTopProducts);
+router.route("/new").get(fetchNewProducts);
+router.route("/filtered-products").post(filterProducts);
 
-// ✅ Reviews
+// Reviews
 router.route("/:id/reviews").post(authenticate, checkId, addProductReview);
 
-// ✅ Top / New products
-router.get("/top", fetchTopProducts);
-router.get("/new", fetchNewProducts);
-
-// ✅ Update & Delete
+// Parameterized product routes
 router
   .route("/:id")
-  .get(fetchProductById)
-  .put(authenticate, authorizeAdmin, upload.single("image"), updateProductDetails)
-  .delete(authenticate, authorizeAdmin, removeProduct);
-
-// ✅ Filter
-router.route("/filtered-products").post(filterProducts);
+  .get(checkId, fetchProductById)
+  .put(authenticate, authorizeAdmin, checkId, upload.single("image"), updateProductDetails)
+  .delete(authenticate, authorizeAdmin, checkId, removeProduct);
 
 export default router;

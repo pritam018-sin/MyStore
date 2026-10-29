@@ -9,12 +9,14 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: order,
       }),
+      invalidatesTags: ["Order"],
     }),
 
     getOrderDetails: builder.query({
       query: (id) => ({
         url: `${ORDERS_URL}/${id}`,
       }),
+      providesTags: ["Order"],
     }),
 
     payOrder: builder.mutation({
@@ -23,6 +25,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: details,
       }),
+      invalidatesTags: ["Order"],
     }),
 
     getPaypalClientId: builder.query({
@@ -35,6 +38,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: `${ORDERS_URL}/mine`,
       }),
+      providesTags: ["Order"],
       keepUnusedDataFor: 5,
     }),
 
@@ -42,6 +46,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: ORDERS_URL,
       }),
+      providesTags: ["Order"],
     }),
 
     deliverOrder: builder.mutation({
@@ -49,18 +54,22 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         url: `${ORDERS_URL}/${orderId}/deliver`,
         method: "PUT",
       }),
+      invalidatesTags: ["Order"],
     }),
 
     getTotalOrders: builder.query({
       query: () => `${ORDERS_URL}/total-orders`,
+      providesTags: ["Order"],
     }),
 
     getTotalSales: builder.query({
       query: () => `${ORDERS_URL}/total-sales`,
+      providesTags: ["Order"],
     }),
 
     getTotalSalesByDate: builder.query({
       query: () => `${ORDERS_URL}/total-sales-by-date`,
+      providesTags: ["Order"],
     }),
   }),
 });

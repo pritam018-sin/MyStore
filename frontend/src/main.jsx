@@ -1,11 +1,9 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import "./index.css";
 import { Provider } from "react-redux";
 import store from "./redux/store";
-import { Route, RouterProvider, createRoutesFromElements } from "react-router";
-import { createBrowserRouter } from "react-router-dom";
+import { Route, RouterProvider, createRoutesFromElements, createBrowserRouter } from "react-router-dom";
 
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -50,17 +48,14 @@ const router = createBrowserRouter(
       <Route path="/product/:id" element={<ProductDetails />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/shop" element={<Shop />} />
-      <Route path="/user-orders" element={<UserOrder />} />
-      
 
       {/* Registered users */}
       <Route path="" element={<PrivateRoute />}>
         <Route path="/profile" element={<Profile />} />
+        <Route path="/user-orders" element={<UserOrder />} />
         <Route path="/shipping" element={<Shipping />} />
         <Route path="/placeorder" element={<PlaceOrder />} />
         <Route path="/order/:id" element={<Order />} />
-        
-
       </Route>
 
       <Route path="/admin" element={<AdminRoute />}>

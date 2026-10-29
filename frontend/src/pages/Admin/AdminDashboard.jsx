@@ -13,9 +13,9 @@ import OrderList from "./OrderList";
 import Loader from "../../components/Loader";
 
 const AdminDashboard = () => {
-  const { data: sales, isLoading } = useGetTotalSalesQuery();
-  const { data: customers, isLoading: loading } = useGetUsersQuery();
-  const { data: orders, isLoading: loadingTwo } = useGetTotalOrdersQuery();
+  const { data: sales, isLoading: loadingSales } = useGetTotalSalesQuery();
+  const { data: customers, isLoading: loadingCustomers } = useGetUsersQuery();
+  const { data: orders, isLoading: loadingOrders } = useGetTotalOrdersQuery();
   const { data: salesDetail } = useGetTotalSalesByDateQuery();
 
   const [state, setState] = useState({
@@ -79,6 +79,31 @@ const AdminDashboard = () => {
     }
   }, [salesDetail]);
 
+  const cards = [
+    {
+      label: "Sales",
+      value:
+        sales?.totalSales !== undefined
+          ? Number(sales.totalSales).toFixed(2)
+          : "0.00",
+      icon: <FaRupeeSign />,
+      isLoading: loadingSales,
+      prefix: <FaRupeeSign className="inline mr-1" />,
+    },
+    {
+      label: "Customers",
+      value: customers?.length ?? 0,
+      icon: <FaUsers />,
+      isLoading: loadingCustomers,
+    },
+    {
+      label: "All Orders",
+      value: orders?.totalOrders ?? 0,
+      icon: <FaShoppingCart />,
+      isLoading: loadingOrders,
+    },
+  ];
+
   return (
     <>
       <AdminMenu />
@@ -86,23 +111,7 @@ const AdminDashboard = () => {
       <section className="xl:ml-[4rem] md:ml-0 p-6">
         {/* Dashboard Summary Cards */}
         <div className="flex flex-wrap gap-8 justify-center">
-          {[
-            {
-              label: "Sales",
-              value: sales?.totalSales.toFixed(2),
-              icon: <FaRupeeSign />,
-            },
-            {
-              label: "Customers",
-              value: customers?.length,
-              icon: <FaUsers />,
-            },
-            {
-              label: "All Orders",
-              value: orders?.totalOrders,
-              icon: <FaShoppingCart />,
-            },
-          ].map((item, index) => (
+          {cards.map((item, index) => (
             <div
               key={index}
               className="backdrop-blur-md bg-white/10 border border-white/10 text-white rounded-xl shadow-lg p-6 w-72 transition-transform duration-300 hover:scale-105 hover:shadow-2xl"
@@ -114,11 +123,11 @@ const AdminDashboard = () => {
                 {item.label}
               </p>
               <h2 className="text-center text-2xl font-bold mt-2">
-                {isLoading && item.label === "Sales" ? (
+                {item.isLoading ? (
                   <Loader />
                 ) : (
                   <>
-                    {item.label === "Sales" && <FaRupeeSign className="inline mr-1" />}
+                    {item.prefix}
                     {item.value}
                   </>
                 )}
@@ -141,7 +150,7 @@ const AdminDashboard = () => {
 
         {/* Order List */}
         <div className="mt-16">
-          <OrderList />
+          <OrderList hideMenu={true} />
         </div>
       </section>
     </>
