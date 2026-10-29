@@ -13,6 +13,7 @@ import { useFetchCategoriesQuery } from "../../redux/api/categoryApiSlice";
 const AdminProductUpdate = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: productData } = useGetProductByIdQuery(params._id);
   const { data: categories = [] } = useFetchCategoriesQuery();
@@ -55,7 +56,7 @@ const AdminProductUpdate = () => {
   // 📦 Handle update
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+   setIsUpdating(true);
     try {
       const formData = new FormData();
       if (imageFile) formData.append("image", imageFile); // append only if new image
@@ -73,6 +74,8 @@ const AdminProductUpdate = () => {
     } catch (err) {
       console.error(err);
       toast.error(err?.data?.message || "Product update failed.");
+    }finally{
+      setIsUpdating(false);
     }
   };
 
@@ -183,9 +186,10 @@ const AdminProductUpdate = () => {
                 <div className="md:col-span-2 flex justify-between mt-6">
                   <button
                     type="submit"
+                    disabled={isUpdating}
                     className="bg-gradient-to-br from-green-500 to-teal-500 px-6 py-3 rounded-xl font-semibold"
                   >
-                    Update Product
+                    {isUpdating ? "Updating..." : "Update"}
                   </button>
 
                   <button
