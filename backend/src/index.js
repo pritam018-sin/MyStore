@@ -35,13 +35,35 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 // CORS Configuration
-app.use(cors({
-  origin: [
-    "http://localhost:5173",  // local
-    "https://mystore-3-49ap.onrender.com" // deployed frontend domain
-  ],
-  credentials: true, // if you are using cookies / auth tokens
-}));
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or Postman)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".netlify.app") ||
+        origin.endsWith(".onrender.com");
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS origin not allowed: ${origin}`));
+    },
+    credentials: true,
+  })
+);
+
+// Health Check
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "PritamStore API is running..." });
+});
 
 // API Routes
 app.use("/api/users", userRoutes);
